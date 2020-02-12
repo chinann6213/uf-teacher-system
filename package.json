@@ -1,0 +1,24 @@
+{
+  "name": "ufinity",
+  "version": "1.0.0",
+  "description": "Assignment for full stack developer position",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --config \"./nodemon.json\"/",
+    "start": "ts-node dist/server.js",
+    "build": "tsc -p .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Chin Ann",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "ts-node": "^8.6.2",
+    "typescript": "^3.7.5"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.2",
+    "@types/node": "^13.7.1",
+    "nodemon": "^2.0.2"
+  }
+}
