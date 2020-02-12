@@ -12,9 +12,23 @@ class App {
   }) {
     this.app = express();
     this.port = config.port;
+
+    this.routes(config.controllers);
   }
 
-  listen() {
+  private middlewares() {
+    
+  }
+
+  private routes(controllers: { 
+    forEach: (arg: (controller: any) => void) => void; 
+  }) {
+    controllers.forEach(controller => {
+        this.app.use('/api', controller.router)
+    })
+  }
+
+  public listen() {
     this.app.listen(this.port, () => {
       console.log(`Listening on port http://localhost:${this.port}.`);
     })
