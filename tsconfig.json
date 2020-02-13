@@ -9,7 +9,7 @@
       "experimentalDecorators": true,
   },
   "include": [
-      "src/**/*.ts"
+      "src/**/*.ts", "src/entity/x"
   ],
   "exclude": [
       "node_modules"
