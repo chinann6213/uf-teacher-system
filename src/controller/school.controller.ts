@@ -17,6 +17,7 @@ class SchoolController implements Controller {
 
   initRoutes() {
     this.router.post('/register', (req, res) => this.registerStudent(req, res));
+    this.router.get('/commonstudents', (req, res) => this.findCommonStudent(req, res));
   }
 
   initConnection() {
@@ -117,6 +118,38 @@ class SchoolController implements Controller {
     }
   }
   
+  async findCommonStudent(req: Request, res: Response) {
+    console.log(req.query.teacher)
+    if (studentRepo === undefined) {
+      this.initConnection();
+    }
+
+    // const result = await teacherRepo.query(`select s.email from student s left join registration r
+    // on s.sid = r.sid
+    // left join teacher t on
+    // t.tid = r.tid
+    // where
+    // t.email in ('ngchinann@gmail.com', 'kenken@gmail.com')
+    // group by s.email having count(*) = 2`);
+
+    // console.log(result);
+
+    const result = await studentRepo.createQueryBuilder("student")
+        .leftJoin("student.teachers", "teacher")
+        .where("teacher.email IN (:...teacherEmails)", {
+          teacherEmails: req.query.teacher
+        })
+        .groupBy('student.email')
+        .having('count(*) = 2')
+        .printSql()
+        .getMany();
+
+    let students = result.map(student => student.email);
+
+    res.status(200).send({
+      students: students
+    });
+  }
 }
 
 export default SchoolController;
