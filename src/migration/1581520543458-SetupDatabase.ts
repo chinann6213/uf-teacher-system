@@ -22,6 +22,7 @@ export class SetupDatabase1581520543458 implements MigrationInterface {
             CREATE TABLE IF NOT EXISTS student (
                 sid INT(11) NOT NULL AUTO_INCREMENT,
                 email VARCHAR(256) NOT NULL,
+                suspended BOOLEAN NOT NULL DEFAULT 0, 
                 PRIMARY KEY (sid)
             ) ENGINE=innodb;
         `);
