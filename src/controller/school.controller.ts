@@ -172,8 +172,10 @@ class SchoolController implements Controller {
         message: 'Unable to suspend student.'
       });
     }
+  }
 
-
+  async listStudentCanNotify() {
+    `select s.email from student s left join registration r on s.sid = r.sid left join teacher t on t.tid = r.tid where t.email = 'ngchinann@gmail.com' and s.suspend = 0 or s.email in ('studentjon@example.com') group by s.email;`
   }
 }
 
