@@ -2,7 +2,8 @@ import App from './app';
 
 import * as bodyParser from 'body-parser';
 
-import TeacherController from './controller/teacher.controller';
+import { createConnection } from 'typeorm';
+import SchoolController from './controller/school.controller';
 
 const app = new App({
   port: 8000,
@@ -10,8 +11,10 @@ const app = new App({
     bodyParser.json(), // allow json body
   ],
   controllers: [
-    new TeacherController(),
+    new SchoolController(),
   ],
 });
 
-app.listen();
+createConnection().then(async () => {
+  app.listen();
+})
