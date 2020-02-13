@@ -18,6 +18,7 @@ class SchoolController implements Controller {
   initRoutes() {
     this.router.post('/register', (req, res) => this.registerStudent(req, res));
     this.router.get('/commonstudents', (req, res) => this.findCommonStudent(req, res));
+    this.router.post('/suspend', (req, res) => this.suspendStudent(req, res));
   }
 
   initConnection() {
@@ -149,6 +150,30 @@ class SchoolController implements Controller {
     res.status(200).send({
       students: students
     });
+  }
+
+  async suspendStudent(req: Request, res: Response) {
+    const student = req.body.student;
+
+    if (studentRepo === undefined) {
+      this.initConnection();
+    }
+
+    try {
+      const result = await studentRepo.update({
+        email: student
+      }, {
+        suspend: true
+      });
+
+      res.status(204).end();
+    } catch(err) {
+      res.status(500).send({
+        message: 'Unable to suspend student.'
+      });
+    }
+
+
   }
 }
 

@@ -19,6 +19,12 @@ export class Student {
   })
   email: string;
 
+  @Column("boolean", {
+    name: "suspend",
+    default: 0,
+  })
+  suspend: boolean;
+
   @ManyToMany(
     () => Teacher,
     teacher => teacher.students
