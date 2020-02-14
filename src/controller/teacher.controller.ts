@@ -40,7 +40,7 @@ class TeacherController implements Controller {
 
     this.initConnection();    
     
-    const addedTeacher = await this.addTeacher(teacher);
+    const addedTeacher = await this._addTeacher(teacher);
     if (!addedTeacher) {
       res.status(500).send({
         message: 'Unable to add teacher.'
@@ -48,7 +48,7 @@ class TeacherController implements Controller {
       return;
     }
     
-    const teacherWithStudent = await this.findStudentUnderTeacher(addedTeacher);
+    const teacherWithStudent = await this._findStudentUnderTeacher(addedTeacher);
 
     if (!teacherWithStudent) {
       res.status(500).send({
@@ -57,7 +57,7 @@ class TeacherController implements Controller {
       return;
     }
 
-    const addedStudentUnderTeacher = await this.addStudentUnderTeacher(teacherWithStudent, students);
+    const addedStudentUnderTeacher = await this._addStudentUnderTeacher(teacherWithStudent, students);
     
     if (addedStudentUnderTeacher) {
       res.status(204).end();
@@ -68,7 +68,7 @@ class TeacherController implements Controller {
     }
   }
 
-  async addTeacher(teacherEmail: string) {
+  async _addTeacher(teacherEmail: string) {
     try {
       const teacher = teacherRepo.create({
         email: teacherEmail
@@ -88,7 +88,7 @@ class TeacherController implements Controller {
     }
   }
 
-  async findStudentUnderTeacher(teacher: Teacher) {
+  async _findStudentUnderTeacher(teacher: Teacher) {
     // find registered students under specified teacher
     try {
       const teacherWithStudents = await teacherRepo.find({
@@ -104,7 +104,7 @@ class TeacherController implements Controller {
     }
   }
 
-  async addStudentUnderTeacher(teacherWithStudents: Teacher, newStudentsEmails: string[]) {
+  async _addStudentUnderTeacher(teacherWithStudents: Teacher, newStudentsEmails: string[]) {
     // extract the students email for exsitence checking
     const registeredStudents = teacherWithStudents.students;
     let existStudentEmail = registeredStudents.map(students => students.email);
@@ -196,14 +196,16 @@ class TeacherController implements Controller {
   }
 
   async listStudentToNotify(req: Request, res: Response) {
-    `select s.email from student s left join registration r on 
-    s.sid = r.sid 
-    left join teacher t on t.tid = r.tid 
-    where t.email = 'ngchinann@gmail.com' and s.suspend = 0 or 
-    s.email in ('studentjon@example.com') group by s.email;`
+    // `select s.email from student s left join registration r on 
+    // s.sid = r.sid 
+    // left join teacher t on t.tid = r.tid 
+    // where t.email = 'ngchinann@gmail.com' and s.suspend = 0 or 
+    // s.email in ('studentjon@example.com') group by s.email;`
 
-    const teacher = req.body.teacher;
-    let notification: string = req.body.notification;
+    const teacherEmail = req.body.teacher;
+    const notification: string = req.body.notification;
+
+    // extract emails from the notification
     let mentionEmails = notification.split(' ').filter(str => str.startsWith('@'));
     mentionEmails = mentionEmails.map(email => email.substr(1));
     
@@ -213,7 +215,7 @@ class TeacherController implements Controller {
       const result = await studentRepo.createQueryBuilder("student")
           .leftJoin("student.teachers", "teacher")
           .where("student.suspend = 0 AND teacher.email = :teacherEmail OR student.email IN (:...mentionEmails)", {
-            teacherEmail: req.query.teacher,
+            teacherEmail: teacherEmail,
             mentionEmails: mentionEmails
           })
           .groupBy('student.email')
