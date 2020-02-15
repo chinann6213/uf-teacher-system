@@ -6,7 +6,7 @@
   "password": "ngchinann",
   "database": "x_school",
   "synchronize": true,
-  "logging": true,
+  "logging": false,
   "entities": [
      "src/entity/**/*.ts"
   ],
