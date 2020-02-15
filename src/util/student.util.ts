@@ -1,8 +1,7 @@
 import { Student } from "../entity/Student";
-import { Connection, Repository, getConnection } from "typeorm";
+import { Repository, getConnection } from "typeorm";
 
 let studentRepo: Repository<Student>;
-
 class StudentUtil {
   
   student: Student;

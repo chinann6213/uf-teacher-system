@@ -1,14 +1,9 @@
 import * as express from 'express';
 import { Request, Response } from 'express';
 import Controller from 'interface/controller.interface';
-import { Repository, getConnection } from 'typeorm';
 import { Teacher } from '../entity/Teacher';
-import { Student } from '../entity/Student';
 import TeacherUtil from '../util/teacher.util';
 import StudentUtil from '../util/student.util';
-
-let teacherRepo: Repository<Teacher>;
-let studentRepo: Repository<Student>;
 
 class TeacherController implements Controller {
   public router = express.Router();
@@ -33,6 +28,7 @@ class TeacherController implements Controller {
     this.studentUtil = new StudentUtil();
   }
 
+  // question 1
   async registerStudentToATeacher(req: Request, res: Response) {
     const teacher = req.body.teacher;
     const students = req.body.students;
@@ -63,6 +59,7 @@ class TeacherController implements Controller {
     }
   }
 
+  // add teacher
   async _addTeacher(teacherEmail: string) {
     try {
       
@@ -92,10 +89,9 @@ class TeacherController implements Controller {
     }
   }
 
+  // assign student to specified teacher
   async _addStudentUnderTeacher(teacherWithStudents: Teacher, newStudentsEmails: string[]) {
-    // extract the students email for exsitence checking
 
-    console.log(newStudentsEmails)
     const registeredStudents = teacherWithStudents.students;
     let existStudentEmail = registeredStudents.map(students => students.email);
 
@@ -122,6 +118,7 @@ class TeacherController implements Controller {
     }
   }
   
+  // question 2
   async findCommonStudent(req: Request, res: Response) {
 
     let teacher = req.query.teacher;
@@ -154,6 +151,7 @@ class TeacherController implements Controller {
     
   }
 
+  // question 3
   async suspendStudent(req: Request, res: Response) {
     const student = req.body.student;
 
@@ -167,6 +165,7 @@ class TeacherController implements Controller {
     }
   }
 
+  // question 4
   async listStudentToNotify(req: Request, res: Response) {
     // `select s.email from student s left join registration r on 
     // s.sid = r.sid 
@@ -194,13 +193,6 @@ class TeacherController implements Controller {
       })
     }
   }
-
-  test() {
-    this.teacherUtil.createTeacher('ngchinann@gmail.com');
-  }
-
-
-  
 }
 
 export default TeacherController;
