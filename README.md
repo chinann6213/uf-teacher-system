@@ -2,7 +2,7 @@
 # uf-assignment
 
 ### Steps to run this repository:
-1. git clone https://github.com/chinann6213/unifinity-interview-assignment.git
+1. git clone https://github.com/chinann6213/uf-ngchinann.git
 2. Configure MySQL credentials
 ```
 "host": HOST,
