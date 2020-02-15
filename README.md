@@ -1,5 +1,5 @@
 
-# unifinity-interview-assignment
+# uf-assignment
 
 ### Steps to run this repository:
 1. git clone https://github.com/chinann6213/unifinity-interview-assignment.git
