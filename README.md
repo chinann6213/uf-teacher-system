@@ -3,12 +3,12 @@
 
 ### Steps to run this repository:
 1. git clone https://github.com/chinann6213/unifinity-interview-assignment.git
-2. Setup MySQL credentials
+2. Configure MySQL credentials
 ```
-"host": "127.0.0.1",
-"port": 3306,
-"username": "root",
-"password": "ngchinann",
+"host": HOST,
+"port": PORT,
+"username": YOUR_USERNAME,
+"password": YOUR_PASSWORD,
 "database": "x_school"
 ```
 3. Import the database by running `ts-node ./node_modules/typeorm/cli.js migration:run`
@@ -17,6 +17,8 @@
 ### Testing
 Tests are only written for Task 1 as it requires several condition checking.
 To test, run `npm run test`
+
+* Make sure the MySQL database is turned on before running the command.
 
 ### File Structure
 #### 1. src - the source code folder
