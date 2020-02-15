@@ -1,18 +1,24 @@
 import * as express from 'express';
 import { Request, Response } from 'express';
 import Controller from 'interface/controller.interface';
-import { getRepository, Repository, getConnection } from 'typeorm';
+import { Repository, getConnection } from 'typeorm';
 import { Teacher } from '../entity/Teacher';
 import { Student } from '../entity/Student';
+import TeacherUtil from '../util/teacher.util';
+import StudentUtil from '../util/student.util';
 
 let teacherRepo: Repository<Teacher>;
 let studentRepo: Repository<Student>;
 
 class TeacherController implements Controller {
   public router = express.Router();
-  
+
+  teacherUtil: TeacherUtil;
+  studentUtil: StudentUtil;
+
   constructor() {
     this.initRoutes();
+    this.initConnection();
   }
 
   initRoutes() {
@@ -23,22 +29,13 @@ class TeacherController implements Controller {
   }
 
   initConnection() {
-    const connection = getConnection();
-    
-    if (!teacherRepo) {
-      teacherRepo = connection.getRepository(Teacher);
-    }
-
-    if (!studentRepo) {
-      studentRepo = connection.getRepository(Student);
-    }
+    this.teacherUtil = new TeacherUtil();
+    this.studentUtil = new StudentUtil();
   }
 
   async registerStudentToATeacher(req: Request, res: Response) {
     const teacher = req.body.teacher;
     const students = req.body.students;
-
-    this.initConnection();    
     
     const addedTeacher = await this._addTeacher(teacher);
     if (!addedTeacher) {
@@ -49,7 +46,6 @@ class TeacherController implements Controller {
     }
     
     const teacherWithStudent = await this._findStudentUnderTeacher(addedTeacher);
-
     if (!teacherWithStudent) {
       res.status(500).send({
         message: 'Unable to find student under specified teacher.'
@@ -58,7 +54,6 @@ class TeacherController implements Controller {
     }
 
     const addedStudentUnderTeacher = await this._addStudentUnderTeacher(teacherWithStudent, students);
-    
     if (addedStudentUnderTeacher) {
       res.status(204).end();
     } else {
@@ -70,16 +65,14 @@ class TeacherController implements Controller {
 
   async _addTeacher(teacherEmail: string) {
     try {
-      const teacher = teacherRepo.create({
-        email: teacherEmail
-      });
-  
+      
+      this.teacherUtil.createTeacher(teacherEmail);
       // find teacher 
-      let findTeacher = await teacherRepo.findOne(teacher);
+      let findTeacher = await this.teacherUtil.findOneTeacher()
   
       // save teacher if not exists
       if (!findTeacher) {
-        findTeacher = await teacherRepo.save(teacher);
+        findTeacher = await this.teacherUtil.saveTeacher();
       } 
   
       return findTeacher;
@@ -88,16 +81,11 @@ class TeacherController implements Controller {
     }
   }
 
+  // find registered students under specified teacher
   async _findStudentUnderTeacher(teacher: Teacher) {
-    // find registered students under specified teacher
     try {
-      const teacherWithStudents = await teacherRepo.find({
-        relations: ['students'],
-        where: {
-          tid: teacher.tid,
-        }
-      });
-  
+      
+      const teacherWithStudents = await this.teacherUtil.findStudentUnderTeacher(teacher)
       return teacherWithStudents[0];
     } catch(err) {
       return false;
@@ -106,6 +94,8 @@ class TeacherController implements Controller {
 
   async _addStudentUnderTeacher(teacherWithStudents: Teacher, newStudentsEmails: string[]) {
     // extract the students email for exsitence checking
+
+    console.log(newStudentsEmails)
     const registeredStudents = teacherWithStudents.students;
     let existStudentEmail = registeredStudents.map(students => students.email);
 
@@ -115,24 +105,15 @@ class TeacherController implements Controller {
           continue;
         }
   
-        // create student
-        const student = studentRepo.create({
-          email: newStudentsEmails[i],
-        });
+        this.studentUtil.createStudent(newStudentsEmails[i]); // create student
+    
+        let findStudent = await this.studentUtil.findOneStudent(); // create student
   
-        // find student
-        let findStudent = await studentRepo.findOne(student);
-  
-        // insert student if not exist
         if (!findStudent) {
-          findStudent = await studentRepo.save(student);
+          findStudent = await this.studentUtil.saveStudent(); // create student
         } 
   
-        // add relationship
-        await teacherRepo.createQueryBuilder()
-            .relation(Teacher, 'students')
-            .of(teacherWithStudents)
-            .add(findStudent);
+        await this.teacherUtil.assignStudents(findStudent); // create student
       }
 
       return true;
@@ -142,8 +123,13 @@ class TeacherController implements Controller {
   }
   
   async findCommonStudent(req: Request, res: Response) {
-    this.initConnection();
 
+    let teacher = req.query.teacher;
+
+    if (typeof teacher === 'string') {
+      teacher = [teacher];
+    }
+  
     // const result = await teacherRepo.query(`select s.email from student s left join registration r
     // on s.sid = r.sid
     // left join teacher t on
@@ -151,16 +137,9 @@ class TeacherController implements Controller {
     // where
     // t.email in ('ngchinann@gmail.com', 'kenken@gmail.com')
     // group by s.email having count(*) = 2`);
+
     try {
-      const result = await studentRepo.createQueryBuilder("student")
-          .leftJoin("student.teachers", "teacher")
-          .where("teacher.email IN (:...teacherEmails)", {
-            teacherEmails: req.query.teacher
-          })
-          .groupBy('student.email')
-          .having('count(*) = 2')
-          .printSql()
-          .getMany();
+      const result = await this.studentUtil.findCommonStudent(teacher)
 
       let students = result.map(student => student.email);
 
@@ -178,15 +157,8 @@ class TeacherController implements Controller {
   async suspendStudent(req: Request, res: Response) {
     const student = req.body.student;
 
-    this.initConnection();
-
     try {
-      await studentRepo.update({
-        email: student
-      }, {
-        suspend: true
-      });
-
+      await this.studentUtil.suspendStudent(student);
       res.status(204).end();
     } catch(err) {
       res.status(500).send({
@@ -209,26 +181,26 @@ class TeacherController implements Controller {
     let mentionEmails = notification.split(' ').filter(str => str.startsWith('@'));
     mentionEmails = mentionEmails.map(email => email.substr(1));
     
-    this.initConnection();
-
     try {
-      const result = await studentRepo.createQueryBuilder("student")
-          .leftJoin("student.teachers", "teacher")
-          .where("student.suspend = 0 AND teacher.email = :teacherEmail OR student.email IN (:...mentionEmails)", {
-            teacherEmail: teacherEmail,
-            mentionEmails: mentionEmails
-          })
-          .groupBy('student.email')
-          .printSql()
-          .getMany();
+      const result = await this.studentUtil.findStudentToNotify(teacherEmail, mentionEmails);
 
-      res.status(200).send(result);
+      const recipients = result.map(d => d.email);
+      res.status(200).send({
+        recipients: recipients
+      });
     } catch(err) {
       res.status(500).send({
         message: 'Unable to list student to notify.'
       })
     }
   }
+
+  test() {
+    this.teacherUtil.createTeacher('ngchinann@gmail.com');
+  }
+
+
+  
 }
 
 export default TeacherController;
