@@ -3,7 +3,7 @@
 
 ### Steps to run this repository:
 1. git clone https://github.com/chinann6213/uf-teacher-system.git
-2/ run `npm install`
+2. run `npm install`
 3. Configure MySQL credentials
 ```
 "host": HOST,
