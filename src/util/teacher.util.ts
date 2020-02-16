@@ -41,6 +41,7 @@ class TeacherUtil {
       }
     });
 
+    this.teacherWithStudents = teacherWithStudents;
     return teacherWithStudents;
   }
 
