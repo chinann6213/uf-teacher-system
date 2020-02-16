@@ -3,8 +3,9 @@
 
 ### Steps to run this repository:
 1. git clone https://github.com/chinann6213/uf-teacher-system.git
-2/ run `npm install`
-3. Configure MySQL credentials
+2. Run `npm install`
+3. Create database 'x_school'
+4. Configure MySQL credentials
 ```
 "host": HOST,
 "port": PORT,
@@ -12,8 +13,8 @@
 "password": YOUR_PASSWORD,
 "database": "x_school"
 ```
-4. Import the database by running `ts-node ./node_modules/typeorm/cli.js migration:run`
-5. run `npm run dev` to start the dev server
+5. Import the database by running `npx ts-node ./node_modules/typeorm/cli.js migration:run`
+6. run `npm run dev` to start the dev server
 
 ### Testing
 Tests are only written for Task 1 as it requires several condition checking.
