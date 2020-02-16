@@ -14,7 +14,7 @@
 "database": "x_school"
 ```
 5. Import the database by running `npx ts-node ./node_modules/typeorm/cli.js migration:run`
-6. run `npm run dev` to start the dev server
+6. Use `npm run dev` to start the dev server
 
 ### Testing
 Tests are only written for Task 1 as it requires several condition checking.
