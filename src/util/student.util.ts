@@ -58,7 +58,7 @@ class StudentUtil {
     };
 
     if (mentionEmails.length > 0) {
-      whereClause += " OR student.email IN (:...mentionEmails)";
+      whereClause += " OR student.suspend = 0 AND student.email IN (:...mentionEmails)";
       whereParam['mentionEmails'] = mentionEmails;
     }
 
