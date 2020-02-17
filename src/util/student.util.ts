@@ -1,5 +1,6 @@
 import { Student } from "../entity/Student";
-import { Repository, getConnection } from "typeorm";
+import { Repository, getConnection, Connection } from "typeorm";
+import { Teacher } from "../entity/Teacher";
 
 let studentRepo: Repository<Student>;
 class StudentUtil {
@@ -8,12 +9,12 @@ class StudentUtil {
 
   constructor() {
     if (!studentRepo) {
-      const connection = getConnection();
+      const connection: Connection = getConnection();
       studentRepo = connection.getRepository(Student);
     }
   }
 
-  createStudent(studentEmail: string) {
+  createStudent(studentEmail: string): void {
     const student = studentRepo.create({
       email: studentEmail
     })
@@ -21,15 +22,15 @@ class StudentUtil {
     this.student = student;
   }
 
-  async findOneStudent() {
+  async findOneStudent(): Promise<Student> {
     return await studentRepo.findOne(this.student);
   }
 
-  async saveStudent() {
+  async saveStudent(): Promise<Student> {
     return await studentRepo.save(this.student);
   }
 
-  async findCommonStudent(teacher: string[]) {
+  async findCommonStudent(teacher: string[]): Promise<Student[]> {
     return await studentRepo.createQueryBuilder("student")
         .leftJoin("student.teachers", "teacher")
         .where("teacher.email IN (:...teacherEmails)", {
@@ -39,11 +40,10 @@ class StudentUtil {
         .having('count(*) = :teacherCount', {
           teacherCount: teacher.length
         })
-        .printSql()
         .getMany();
   }
 
-  async suspendStudent(student: string) {
+  async suspendStudent(student: string): Promise<void> {
     await studentRepo.update({
       email: student
     }, {
@@ -51,7 +51,7 @@ class StudentUtil {
     });
   }
 
-  async findStudentToNotify(teacherEmail: string, mentionEmails: string[]) {
+  async findStudentToNotify(teacherEmail: string, mentionEmails: string[]): Promise<Student[]> {
     let whereClause = "student.suspend = 0 AND teacher.email = :teacherEmail";
     let whereParam = {
       teacherEmail: teacherEmail,

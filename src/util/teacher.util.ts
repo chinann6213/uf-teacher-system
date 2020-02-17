@@ -12,12 +12,12 @@ class TeacherUtil {
   constructor() {
     
     if (!teacherRepo) {
-      const connection = getConnection();
+      const connection: Connection = getConnection();
       teacherRepo = connection.getRepository(Teacher);
     }
   }
 
-  createTeacher(teacherEmail: string) {
+  createTeacher(teacherEmail: string): void {
     const teacher = teacherRepo.create({
       email: teacherEmail
     });
@@ -25,15 +25,15 @@ class TeacherUtil {
     this.teacher = teacher;
   }
 
-  async findOneTeacher() {
+  async findOneTeacher(): Promise<Teacher> {
     return await teacherRepo.findOne(this.teacher);
   }
 
-  async saveTeacher() {
+  async saveTeacher(): Promise<Teacher> {
     return await teacherRepo.save(this.teacher);
   }
 
-  async findStudentUnderTeacher(teacher: Teacher) {
+  async findStudentUnderTeacher(teacher: Teacher): Promise<Teacher[]> {
     const teacherWithStudents = await teacherRepo.find({
       relations: ['students'],
       where: {
@@ -45,7 +45,7 @@ class TeacherUtil {
     return teacherWithStudents;
   }
 
-  async assignStudents(findStudent: Student) {
+  async assignStudents(findStudent: Student): Promise<void> {
     await teacherRepo.createQueryBuilder()
         .relation(Teacher, 'students')
         .of(this.teacherWithStudents)
