@@ -1,4 +1,3 @@
-import { Request, Response, response } from 'express';
 import { createConnection, Connection } from 'typeorm';
 import TeacherController from '../src/controller/teacher.controller';
 import TeacherUtil from '../src/util/teacher.util';
@@ -20,23 +19,14 @@ afterAll(() => {
 });
 
 it('should run add teacher', async () => {
-  const req = {
-    body: {
-      "teacher": "teacherken@gmail.com",
-      "students": [
-          "studentbob@example.com",
-          "studentagnes@example.com",
-          "studentmiche@example.com"
-      ]
-    }
-  } as Request;
+  const email = "teacherken@gmail.com";
   
   const createTeacher = jest.spyOn(TeacherUtil.prototype, 'createTeacher');
   const findOneTeacher = jest.spyOn(TeacherUtil.prototype, 'findOneTeacher');
   const saveTeacher = jest.spyOn(TeacherUtil.prototype, 'saveTeacher');
   
   const teacherController = new TeacherController();
-  await teacherController._addTeacher(req.body.teacher);
+  await teacherController._addTeacher(email);
 
   expect(createTeacher).toHaveBeenCalledTimes(1);
   expect(findOneTeacher).toHaveBeenCalledTimes(1);
