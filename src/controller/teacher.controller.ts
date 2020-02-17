@@ -4,6 +4,7 @@ import Controller from 'interface/controller.interface';
 import { Teacher } from '../entity/Teacher';
 import TeacherUtil from '../util/teacher.util';
 import StudentUtil from '../util/student.util';
+import * as EmailValidator from 'email-validator';
 
 class TeacherController implements Controller {
   public router = express.Router();
@@ -11,27 +12,44 @@ class TeacherController implements Controller {
   teacherUtil: TeacherUtil;
   studentUtil: StudentUtil;
 
+  invalidTeacherEmailMsg: string = 'Teacher email is invalid.';
+  invalidStudentsEmailMsg: string = 'One of more teacher email(s) is invalid.';
+
   constructor() {
     this.initRoutes();
     this.initConnection();
   }
 
-  initRoutes() {
+  initRoutes(): void {
     this.router.post('/register', (req, res) => this.registerStudentToATeacher(req, res));
     this.router.get('/commonstudents', (req, res) => this.findCommonStudent(req, res));
     this.router.post('/suspend', (req, res) => this.suspendStudent(req, res));
     this.router.post('/retrievefornotifications', (req, res) => this.listStudentToNotify(req, res));
   }
 
-  initConnection() {
+  initConnection(): void {
     this.teacherUtil = new TeacherUtil();
     this.studentUtil = new StudentUtil();
   }
 
   // question 1
-  async registerStudentToATeacher(req: Request, res: Response) {
-    const teacher = req.body.teacher;
-    const students = req.body.students;
+  async registerStudentToATeacher(req: Request, res: Response): Promise<void> {
+    const teacher: string = req.body.teacher;
+    const students: string[] = req.body.students;
+
+    if (!this._isEmailValid(teacher)) {
+      res.status(422).send({
+        message: this.invalidTeacherEmailMsg
+      });
+      return;
+    }
+
+    if (students.map(s => this._isEmailValid(s)).includes(false)) {
+      res.status(422).send({
+        message: 'One of more student email(s) is invalid.'
+      });
+      return;
+    }
     
     const addedTeacher = await this._addTeacher(teacher);
     if (!addedTeacher) {
@@ -60,7 +78,7 @@ class TeacherController implements Controller {
   }
 
   // add teacher
-  async _addTeacher(teacherEmail: string) {
+  async _addTeacher(teacherEmail: string): Promise<Teacher> {
     try {
       
       this.teacherUtil.createTeacher(teacherEmail);
@@ -74,26 +92,26 @@ class TeacherController implements Controller {
   
       return findTeacher;
     } catch(err) {
-      return false;
+      return;
     }
   }
 
   // find registered students under specified teacher
-  async _findStudentUnderTeacher(teacher: Teacher) {
+  async _findStudentUnderTeacher(teacher: Teacher): Promise<Teacher> {
     try {
       
       const teacherWithStudents = await this.teacherUtil.findStudentUnderTeacher(teacher)
       return teacherWithStudents[0];
     } catch(err) {
-      return false;
+      return;
     }
   }
 
   // assign student to specified teacher
-  async _addStudentUnderTeacher(teacherWithStudents: Teacher, newStudentsEmails: string[]) {
+  async _addStudentUnderTeacher(teacherWithStudents: Teacher, newStudentsEmails: string[]): Promise<Boolean> {
 
     const registeredStudents = teacherWithStudents.students;
-    let existStudentEmail = registeredStudents.map(students => students.email);
+    let existStudentEmail: string[] = registeredStudents.map(students => students.email);
 
     try {
       for (let i in newStudentsEmails) {
@@ -119,24 +137,23 @@ class TeacherController implements Controller {
   }
   
   // question 2
-  async findCommonStudent(req: Request, res: Response) {
+  async findCommonStudent(req: Request, res: Response): Promise<void> {
 
-    let teacher = req.query.teacher;
+    let teacher: string = req.query.teacher;
+    let teachers: string[];
 
-    if (typeof teacher === 'string') {
-      teacher = [teacher];
+    // convert teacher email from string to array if there's only one teacher
+    teachers = typeof teacher === 'string' ? teachers = [teacher] : teachers = teacher;
+
+    if (teachers.map(s => this._isEmailValid(s)).includes(false)) {
+      res.status(422).send({
+        message: this.invalidStudentsEmailMsg
+      });
+      return;
     }
-  
-    // const result = await teacherRepo.query(`select s.email from student s left join registration r
-    // on s.sid = r.sid
-    // left join teacher t on
-    // t.tid = r.tid
-    // where
-    // t.email in ('ngchinann@gmail.com', 'kenken@gmail.com')
-    // group by s.email having count(*) = 2`);
 
     try {
-      const result = await this.studentUtil.findCommonStudent(teacher)
+      const result = await this.studentUtil.findCommonStudent(teachers)
 
       let students = result.map(student => student.email);
 
@@ -152,8 +169,15 @@ class TeacherController implements Controller {
   }
 
   // question 3
-  async suspendStudent(req: Request, res: Response) {
-    const student = req.body.student;
+  async suspendStudent(req: Request, res: Response): Promise<void> {
+    const student: string = req.body.student;
+
+    if (!this._isEmailValid(student)) {
+      res.status(422).send({
+        message: 'Student email is invalid.'
+      });
+      return;
+    }
 
     try {
       await this.studentUtil.suspendStudent(student);
@@ -166,19 +190,29 @@ class TeacherController implements Controller {
   }
 
   // question 4
-  async listStudentToNotify(req: Request, res: Response) {
-    // `select s.email from student s left join registration r on 
-    // s.sid = r.sid 
-    // left join teacher t on t.tid = r.tid 
-    // where t.email = 'ngchinann@gmail.com' and s.suspend = 0 or 
-    // s.email in ('studentjon@example.com') group by s.email;`
-
-    const teacherEmail = req.body.teacher;
+  async listStudentToNotify(req: Request, res: Response): Promise<void> {
+    const teacherEmail: string = req.body.teacher;
     const notification: string = req.body.notification;
 
     // extract emails from the notification
     let mentionEmails = notification.split(' ').filter(str => str.startsWith('@'));
     mentionEmails = mentionEmails.map(email => email.substr(1));
+
+    if (!this._isEmailValid(teacherEmail)) {
+      res.status(422).send({
+        message: this.invalidTeacherEmailMsg
+      });
+      return;
+    }
+
+    if (mentionEmails.length > 0) {
+      if (mentionEmails.map(d => this._isEmailValid(d)).includes(false)) {
+        res.status(422).send({
+          message: this.invalidStudentsEmailMsg
+        });
+        return;
+      }
+    }
     
     try {
       const result = await this.studentUtil.findStudentToNotify(teacherEmail, mentionEmails);
@@ -192,6 +226,11 @@ class TeacherController implements Controller {
         message: 'Unable to list student to notify.'
       })
     }
+  }
+
+  // email validator
+  _isEmailValid(email: string): Boolean {
+    return EmailValidator.validate(email);
   }
 }
 
