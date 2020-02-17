@@ -17,7 +17,10 @@
 6. Use `npm run dev` to start the dev server
 
 ### Testing
-Tests are only written for Task 1 as it requires several condition checking.
+Tests are written for:
+1. Task 1 as it requires several condition checking.
+2. Email validator.
+
 To test, run `npm run test`
 
 * Make sure the MySQL database is turned on before running the command.

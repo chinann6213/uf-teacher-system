@@ -1,4 +1,4 @@
-import { Request } from 'express';
+import { Request, Response, response } from 'express';
 import { createConnection, Connection } from 'typeorm';
 import TeacherController from '../src/controller/teacher.controller';
 import TeacherUtil from '../src/util/teacher.util';
@@ -19,7 +19,7 @@ afterAll(() => {
   conn.close();
 });
 
-it('it should run add teacher', async () => {
+it('should run add teacher', async () => {
   const req = {
     body: {
       "teacher": "teacherken@gmail.com",
@@ -45,7 +45,7 @@ it('it should run add teacher', async () => {
   // conn.close();
 })
 
-it('it should found students under specified teacher', async () => {
+it('should found students under specified teacher', async () => {
 
   // const conn = await createConnection();
   const teacher = new Teacher();
@@ -63,7 +63,7 @@ it('it should found students under specified teacher', async () => {
 
 })
 
-it('it should add students to a teacher', async () => {
+it('should add students to a teacher', async () => {
 
   // const conn = await createConnection();
   const mockTeacherWithStudents = new Teacher();
@@ -94,7 +94,7 @@ it('it should add students to a teacher', async () => {
   expect(findStudentUnderTeacher).toHaveBeenCalledTimes(1);
 })
 
-it('it should not run add students to a teacher', async () => {
+it('should not run add students to a teacher', async () => {
 
   // const conn = await createConnection();
   const mockExistsTeacher = new Teacher();
@@ -117,12 +117,31 @@ it('it should not run add students to a teacher', async () => {
   StudentUtil.prototype.saveStudent = jest.fn();
   TeacherUtil.prototype.assignStudents = jest.fn();
 
-  const wwww = new TeacherController();
-  await wwww._addStudentUnderTeacher(mockExistsTeacher, mockExistsEmail);
+  const teacherController = new TeacherController();
+  await teacherController._addStudentUnderTeacher(mockExistsTeacher, mockExistsEmail);
 
   expect(StudentUtil.prototype.createStudent).not.toHaveBeenCalled();
   expect(StudentUtil.prototype.findOneStudent).not.toHaveBeenCalled();
   expect(StudentUtil.prototype.saveStudent).not.toHaveBeenCalled();
   expect(TeacherUtil.prototype.assignStudents).not.toHaveBeenCalled();
 
+})
+
+// test input for q1
+it('should return false for invalid email', async () => {
+  const invalidEmail = 'studentben@.gmail.com'
+
+  const teacherController = new TeacherController();
+  const result = await teacherController._isEmailValid(invalidEmail);
+
+  expect(result).toBe(false);
+})
+
+it('should return true for valid email', async () => {
+  const validEmail = 'studentben@gmail.com'
+
+  const teacherController = new TeacherController();
+  const result = await teacherController._isEmailValid(validEmail);
+
+  expect(result).toBe(true);
 })
